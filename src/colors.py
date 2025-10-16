@@ -5,7 +5,7 @@ GREEN = (0, 5, 0)
 BLUE = (0, 0, 10)
 OFF = (0, 0, 0)
 
-PRIMARIES = [("red", RED), ("green", GREEN), ("blue", BLUE)]
+RGB = [("red", RED), ("green", GREEN), ("blue", BLUE)]
 
 
 class ColorIterator:
