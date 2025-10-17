@@ -86,8 +86,8 @@ class BreakReadyState:
 
 class WorkRunningState:
     ID = "work_running"
-    WORK_DURATION = 5  # DEBUG amount
-    # WORK_DURATION = 60 * 25 # 25 minutes
+    # WORK_DURATION = 20  # DEBUG amount
+    WORK_DURATION = 60 * 25  # 25 minutes
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
@@ -107,8 +107,8 @@ class WorkRunningState:
 
 class BreakRunningState:
     ID = "break_running"
-    TIMER_DURATION = 20  # DEBUG amount
-    # TIMER_DURATION = 60 * 5 # 5 minutes
+    # TIMER_DURATION = 10  # DEBUG amount
+    TIMER_DURATION = 60 * 5  # 5 minutes
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
