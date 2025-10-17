@@ -1,5 +1,5 @@
-from colors import OFF
-from time import ticks_ms
+from colors import OFF, GREEN, RED
+from time import ticks_ms, time
 from ticks import ticks_delta
 
 RUNNER = None
@@ -91,3 +91,42 @@ class Blinker:
 
     def stop(self):
         self.reset()
+
+
+class Timer:
+    TASK_NAME = "timer"
+    FINISHED_EVENT = "finished"
+
+    def __init__(self, rgb):
+        self.rgb = rgb
+        self.start_color = GREEN
+        self.end_color = RED
+
+    def run(self):
+        now = time()
+        if self.started_at is None:
+            self.started_at = now
+        elapsed = now - self.started_at
+        if elapsed >= self.duration:
+            return self.FINISHED_EVENT
+        progress = elapsed / self.duration
+        color = self.interpolate(progress)
+        self.rgb.set_color(color)
+        return None
+
+    def reset(self, duration):
+        self.duration = duration
+        self.started_at = None
+        self.rgb.set_color(OFF)
+
+    def stop(self):
+        self.reset(0)
+
+    def interpolate(self, progress):
+        AR, AG, AB = self.start_color
+        BR, BG, BB = self.end_color
+
+        CR = AR - (AR - BR) * progress
+        CG = AG - (AG - BG) * progress
+        CB = AB - (AB - BB) * progress
+        return (int(CR), int(CG), int(CB))

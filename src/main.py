@@ -3,7 +3,7 @@ from rgb_led import RGBled
 from colors import OFF, GREEN
 from time import sleep
 from state_machine import get_state_machine
-from tasks import Blinker, get_runner, get_task_registry
+from tasks import Blinker, get_runner, get_task_registry, Timer
 
 # GPIO mapping
 RGB_PIN = 23
@@ -28,9 +28,12 @@ def main():
 
     # register basic tasks
     blinker = Blinker(rgb, GREEN, 500)
+    timer = Timer(rgb)
+
     task_registry = get_task_registry()
     task_registry.add(blinker, blinker.TASK_NAME)
     task_registry.add(button, button.TASK_NAME)
+    task_registry.add(timer, timer.TASK_NAME)
 
     # init runner
     runner = get_runner()
