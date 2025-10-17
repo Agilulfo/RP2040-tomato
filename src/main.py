@@ -42,7 +42,7 @@ def main():
     # init runner
     runner = get_runner()
     runner.add_task(UsrButton.TASK_NAME)
-    runner.add_task(runner_indicator.TASK_NAME)
+    # runner.add_task(runner_indicator.TASK_NAME)
 
     # init state machine
     # TODO: probably can be removed
