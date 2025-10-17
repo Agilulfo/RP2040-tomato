@@ -99,9 +99,9 @@ class Runner:
         self.tasks.add(name)
 
     def remove_task(self, name):
-        task = self.tasks.discard(name)
-        if task:
-            task.stop()
+        task = task_registry.get(name)
+        task.stop()
+        self.tasks.remove(name)
 
     def run(self):
         events = []
