@@ -38,9 +38,9 @@ class StateMachine:
 class WaitingState:
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states["blinking"], {"color": GREEN})
+            return (states[BLINKING], {"color": GREEN})
         elif event == SHORT_PRESSED:
-            return (states["blinking"], {"color": BLUE})
+            return (states[BLINKING], {"color": BLUE})
         return None
 
     def enter(self, _options):
@@ -53,9 +53,9 @@ class WaitingState:
 class BlinkingState:
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states["blinking"], {"color": GREEN})
+            return (states[BLINKING], {"color": GREEN})
         elif event == SHORT_PRESSED:
-            return (states["blinking"], {"color": BLUE})
+            return (states[BLINKING], {"color": BLUE})
         return None
 
     def enter(self, options):
