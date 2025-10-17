@@ -1,6 +1,6 @@
 from usr_button import LONG_PRESSED, SHORT_PRESSED
 from tasks import Blinker, get_runner, get_task_registry, Timer
-from colors import BLUE, GREEN
+from colors import BLUE, GREEN, RED
 
 
 STATE_MACHINE = None
@@ -84,12 +84,14 @@ class BreakReadyState:
 
 class WorkRunningState:
     ID = "work_running"
-    WORK_DURATION = 60  # DEBUG amount
+    WORK_DURATION = 5  # DEBUG amount
     # WORK_DURATION = 60 * 25 # 25 minutes
 
     def handle_event(self, event):
-        if event == LONG_PRESSED or event == Timer.FINISHED_EVENT:
+        if event == LONG_PRESSED:
             return (states[WaitingState.ID], None)
+        elif event == Timer.FINISHED_EVENT:
+            return (states[WorkOverState.ID], None)
         return None
 
     def enter(self, _options):
@@ -120,10 +122,30 @@ class BreakRunningState:
         get_runner().remove_task(Timer.TASK_NAME)
 
 
+class WorkOverState:
+    ID = "work_over_state"
+
+    def handle_event(self, event):
+        if event == LONG_PRESSED:
+            return (states[WaitingState.ID], None)
+        elif event == SHORT_PRESSED:
+            return (states[BreakRunningState.ID], None)
+        return None
+
+    def enter(self, _options):
+        blinker = get_task_registry().get(Blinker.TASK_NAME)
+        blinker.reset(RED)
+        get_runner().add_task(Blinker.TASK_NAME)
+
+    def exit(self):
+        get_runner().remove_task(Blinker.TASK_NAME)
+
+
 states = {
     WaitingState.ID: WaitingState(),
     WorkReadyState.ID: WorkReadyState(),
     BreakReadyState.ID: BreakReadyState(),
     BreakRunningState.ID: BreakRunningState(),
     WorkRunningState.ID: WorkRunningState(),
+    WorkOverState.ID: WorkOverState(),
 }
