@@ -109,8 +109,10 @@ class BreakRunningState:
     # TIMER_DURATION = 60 * 5 # 5 minutes
 
     def handle_event(self, event):
-        if event == LONG_PRESSED or event == Timer.FINISHED_EVENT:
+        if event == LONG_PRESSED:
             return (states[WaitingState.ID], None)
+        elif event == Timer.FINISHED_EVENT:
+            return (states[BreakOverState.ID], None)
         return None
 
     def enter(self, _options):
@@ -141,6 +143,25 @@ class WorkOverState:
         get_runner().remove_task(Blinker.TASK_NAME)
 
 
+class BreakOverState:
+    ID = "break_over_state"
+
+    def handle_event(self, event):
+        if event == LONG_PRESSED:
+            return (states[WaitingState.ID], None)
+        elif event == SHORT_PRESSED:
+            return (states[WorkRunningState.ID], None)
+        return None
+
+    def enter(self, _options):
+        blinker = get_task_registry().get(Blinker.TASK_NAME)
+        blinker.reset(RED)
+        get_runner().add_task(Blinker.TASK_NAME)
+
+    def exit(self):
+        get_runner().remove_task(Blinker.TASK_NAME)
+
+
 states = {
     WaitingState.ID: WaitingState(),
     WorkReadyState.ID: WorkReadyState(),
@@ -148,4 +169,5 @@ states = {
     BreakRunningState.ID: BreakRunningState(),
     WorkRunningState.ID: WorkRunningState(),
     WorkOverState.ID: WorkOverState(),
+    BreakOverState.ID: WorkOverState(),
 }
