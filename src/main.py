@@ -83,7 +83,9 @@ class Runner:
         self.tasks.add(name)
 
     def remove_task(self, name):
-        self.tasks.discard(name)
+        task = self.tasks.discard(name)
+        if task:
+            task.stop()
 
     def run(self):
         events = []
@@ -139,7 +141,9 @@ class Blinker:
             self.rgb.set_color(self.color)
             self.on = True
 
-    # add task termination
+    def stop(self):
+        self.reset()
+
 
 # INITIALIZATION
 
