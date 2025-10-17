@@ -53,10 +53,9 @@ class WaitingState:
 class BlinkingState:
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return states["blinking"]
+            return (states["blinking"], {"color": GREEN})
         elif event == SHORT_PRESSED:
-            return states["blinking"]
-            pass
+            return (states["blinking"], {"color": BLUE})
         return None
 
     def enter(self, options):
@@ -140,6 +139,7 @@ class Blinker:
             self.rgb.set_color(self.color)
             self.on = True
 
+    # add task termination
 
 # INITIALIZATION
 
