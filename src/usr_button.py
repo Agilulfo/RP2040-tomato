@@ -1,5 +1,5 @@
 from machine import Pin
-from time import ticks_ms, ticks_add, sleep_ms
+from time import ticks_ms, sleep_ms
 from ticks import ticks_delta
 
 PRESSED = 0
@@ -9,8 +9,6 @@ SHORT_PRESSED = "short"
 LONG_PRESSED = "long"
 
 DURATION_TRESHOLD = 300
-
-TICKS_MAX = ticks_add(0, -1)
 
 
 class UsrButton:
@@ -27,7 +25,6 @@ class UsrButton:
             if current_status == RELEASED:
                 current_tick = ticks_ms()
                 duration = ticks_delta(self.pressed_at, current_tick)
-                print(f"the duration was {TICKS_MAX} - {duration}")
                 if duration < DURATION_TRESHOLD:
                     detected = SHORT_PRESSED
                 else:
