@@ -59,12 +59,12 @@ class TomatoReadyState:
         return None
 
     def enter(self, _options):
-        blinker = task_registry.get(BLINKER)
+        blinker = get_task_registry().get(BLINKER)
         blinker.reset(GREEN)
-        runner.add_task(BLINKER)
+        get_runner().add_task(BLINKER)
 
     def exit(self):
-        runner.remove_task(BLINKER)
+        get_runner().remove_task(BLINKER)
 
 
 PAUSE_READY = "pause_ready"
@@ -79,12 +79,12 @@ class PauseReadyState:
         return None
 
     def enter(self, _options):
-        blinker = task_registry.get(BLINKER)
+        blinker = get_task_registry().get(BLINKER)
         blinker.reset(BLUE)
-        runner.add_task(BLINKER)
+        get_runner().add_task(BLINKER)
 
     def exit(self):
-        runner.remove_task(BLINKER)
+        get_runner().remove_task(BLINKER)
 
 
 # TASKS INFRASTRUCTURE
@@ -98,18 +98,18 @@ class Runner:
         self.tasks.add(name)
 
     def remove_task(self, name):
-        task = task_registry.get(name)
+        task = get_task_registry().get(name)
         task.stop()
         self.tasks.remove(name)
 
     def run(self):
         events = []
         for task_name in self.tasks:
-            task = task_registry.get(task_name)
+            task = get_task_registry().get(task_name)
             event = task.run()
             if event:
                 events.append(event)
-        state_machine.handle_events(events)
+        get_state_machine().handle_events(events)
 
 
 class TaskRegistry:
@@ -169,9 +169,30 @@ states = {
     PAUSE_READY: PauseReadyState(),
 }
 
-task_registry = TaskRegistry()
-state_machine = StateMachine()
-runner = Runner()
+RUNNER = None
+TASK_REGISTRY = None
+STATE_MACHINE = None
+
+
+def get_runner():
+    global RUNNER
+    if RUNNER is None:
+        RUNNER = Runner()
+    return RUNNER
+
+
+def get_state_machine():
+    global STATE_MACHINE
+    if STATE_MACHINE is None:
+        STATE_MACHINE = StateMachine()
+    return STATE_MACHINE
+
+
+def get_task_registry():
+    global TASK_REGISTRY
+    if TASK_REGISTRY is None:
+        TASK_REGISTRY = TaskRegistry()
+    return TASK_REGISTRY
 
 
 def init_device():
@@ -191,14 +212,16 @@ def main():
 
     # register basic tasks
     blinker = Blinker(rgb, GREEN, 500)
+    task_registry = get_task_registry()
     task_registry.add(blinker, BLINKER)
     task_registry.add(button, BUTTON)
 
     # init runner
+    runner = get_runner()
     runner.add_task(BUTTON)
 
     # init state machine
-    state_machine.start_from(states[WAITING])
+    get_state_machine().start_from(states[WAITING])
     while True:
         runner.run()
 
