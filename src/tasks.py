@@ -1,4 +1,4 @@
-from colors import OFF, GREEN, RED
+from colors import OFF, GREEN, RED, hue_to_rgb
 from time import ticks_ms, time
 from ticks import ticks_delta
 
@@ -147,3 +147,33 @@ class RunnerIndicator:
             self.led.toggle()
             self.last_flip = current_ticks
         return None
+
+
+class HueLoop:
+    TASK_NAME = "hue_loop"
+    PERIOD = 5000
+
+    def __init__(self, rgb):
+        self.rgb = rgb
+
+    def run(self):
+        now = ticks_ms()
+        if self.cycle_started_at is None:
+            self.cycle_started_at = now
+        elapsed = ticks_delta(self.cycle_started_at, now)
+        if elapsed > self.PERIOD:
+            self.cycle_started_at = now
+            elapsed = 0
+
+        angle = elapsed / self.PERIOD * 360
+        color = hue_to_rgb(angle)
+        self.rgb.set_color(color)
+
+        return None
+
+    def reset(self):
+        self.cycle_started_at = None
+        self.rgb.set_color(OFF)
+
+    def stop(self):
+        self.reset()

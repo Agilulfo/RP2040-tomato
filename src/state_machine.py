@@ -1,5 +1,5 @@
 from usr_button import LONG_PRESSED, SHORT_PRESSED
-from tasks import Blinker, get_runner, get_task_registry, Timer
+from tasks import Blinker, get_runner, get_task_registry, Timer, HueLoop
 from colors import BLUE, GREEN, RED
 
 
@@ -38,10 +38,12 @@ class WaitingState:
         return None
 
     def enter(self, _options):
-        pass
+        looper = get_task_registry().get(HueLoop.TASK_NAME)
+        looper.reset()
+        get_runner().add_task(HueLoop.TASK_NAME)
 
     def exit(self):
-        pass
+        get_runner().remove_task(HueLoop.TASK_NAME)
 
 
 class WorkReadyState:
