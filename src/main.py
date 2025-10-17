@@ -91,9 +91,8 @@ class PauseReadyState:
 
 
 class Runner:
-    def __init__(self, state_machine):
+    def __init__(self):
         self.tasks = set()
-        self.state_machine = state_machine
 
     def add_task(self, name):
         self.tasks.add(name)
@@ -110,7 +109,7 @@ class Runner:
             event = task.run()
             if event:
                 events.append(event)
-        self.state_machine.handle_events(events)
+        state_machine.handle_events(events)
 
 
 class TaskRegistry:
@@ -169,9 +168,10 @@ states = {
     TOMATO_READY: TomatoReadyState(),
     PAUSE_READY: PauseReadyState(),
 }
+
 task_registry = TaskRegistry()
 state_machine = StateMachine()
-runner = Runner(state_machine)
+runner = Runner()
 
 
 def init_device():
