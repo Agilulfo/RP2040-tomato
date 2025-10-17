@@ -56,7 +56,7 @@ class WorkReadyState:
 
     def enter(self, _options):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(GREEN)
+        blinker.reset(BLUE)
         get_runner().add_task(Blinker.TASK_NAME)
 
     def exit(self):
@@ -75,7 +75,7 @@ class BreakReadyState:
 
     def enter(self, _options):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(BLUE)
+        blinker.reset(GREEN)
         get_runner().add_task(Blinker.TASK_NAME)
 
     def exit(self):
@@ -99,6 +99,7 @@ class WorkRunningState:
 
     def exit(self):
         get_runner().remove_task(Timer.TASK_NAME)
+
 
 class BreakRunningState:
     ID = "break_running"
