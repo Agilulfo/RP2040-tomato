@@ -21,7 +21,7 @@ BLINKER = "blinker"
 class StateMachine:
     def start_from(self, state):
         self.current_state = state
-        state.enter()
+        state.enter(None)
 
     def handle_events(self, events):
         for event in events:
@@ -62,7 +62,7 @@ class BlinkingState:
     def enter(self, options):
         blinker = task_registry.get(BLINKER)
         blinker.reset(options["color"])
-        runner.add_task(self, BLINKER)
+        runner.add_task(BLINKER)
 
     def exit(self):
         # maybe reset blinker task?
@@ -104,7 +104,7 @@ class TaskRegistry:
         self.register[name] = task
 
     def get(self, name):
-        self.register.get(name, None)
+        return self.register.get(name, None)
 
 
 # TASKS
@@ -119,7 +119,8 @@ class Blinker:
 
     def run(self):
         current_ticks = ticks_ms()
-        if ticks_delta(self.last_flip, current_ticks) > self.period / 2:
+        passed = ticks_delta(self.last_flip, current_ticks)
+        if passed >= self.period / 2:
             self._toggle()
             self.last_flip = current_ticks
         return None
@@ -134,14 +135,16 @@ class Blinker:
     def _toggle(self):
         if self.on:
             self.rgb.set_color(OFF)
+            self.on = False
         else:
             self.rgb.set_color(self.color)
+            self.on = True
 
 
 # INITIALIZATION
 
 # Global shared states
-states = {"waiting": WaitingState(), "blinking": BlinkingState()}
+states = {WAITING: WaitingState(), BLINKING: BlinkingState()}
 task_registry = TaskRegistry()
 state_machine = StateMachine()
 runner = Runner(state_machine)
@@ -169,6 +172,9 @@ def main():
 
     # init runner
     runner.add_task(BUTTON)
+
+    # init state machine
+    state_machine.start_from(states[WAITING])
     while True:
         runner.run()
 
