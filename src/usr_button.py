@@ -12,6 +12,8 @@ DURATION_TRESHOLD = 300
 
 
 class UsrButton:
+    TASK_NAME = "button"
+
     def __init__(self, gpio):
         self.pin = Pin(gpio, Pin.IN, Pin.PULL_UP)
         # reading immediatelly cause issue, wait a little
