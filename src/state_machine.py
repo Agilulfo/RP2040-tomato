@@ -10,7 +10,7 @@ def get_state_machine():
     global STATE_MACHINE
     if STATE_MACHINE is None:
         STATE_MACHINE = StateMachine()
-        STATE_MACHINE.start_from(states[WAITING])
+        STATE_MACHINE.start_from(states[WaitingState.ID])
     return STATE_MACHINE
 
 
@@ -29,15 +29,12 @@ class StateMachine:
                 self.current_state = next_state
 
 
-# STATES
-
-WAITING = "waiting"
-
-
 class WaitingState:
+    ID = "waiting"
+
     def handle_event(self, event):
         if event == SHORT_PRESSED:
-            return (states[TOMATO_READY], None)
+            return (states[TomatoReadyState.ID], None)
         return None
 
     def enter(self, _options):
@@ -47,15 +44,14 @@ class WaitingState:
         pass
 
 
-TOMATO_READY = "tomato_ready"
-
-
 class TomatoReadyState:
+    ID = "tomato_ready"
+
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WAITING], None)
+            return (states[WaitingState.ID], None)
         elif event == SHORT_PRESSED:
-            return (states[PAUSE_READY], None)
+            return (states[PauseReadyState.ID], None)
         return None
 
     def enter(self, _options):
@@ -67,15 +63,14 @@ class TomatoReadyState:
         get_runner().remove_task(Blinker.TASK_NAME)
 
 
-PAUSE_READY = "pause_ready"
-
-
 class PauseReadyState:
+    ID = "pause_ready"
+
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WAITING], None)
+            return (states[WaitingState.ID], None)
         elif event == SHORT_PRESSED:
-            return (states[TOMATO_READY], None)
+            return (states[TomatoReadyState.ID], None)
         return None
 
     def enter(self, _options):
@@ -88,7 +83,7 @@ class PauseReadyState:
 
 
 states = {
-    WAITING: WaitingState(),
-    TOMATO_READY: TomatoReadyState(),
-    PAUSE_READY: PauseReadyState(),
+    WaitingState.ID: WaitingState(),
+    TomatoReadyState.ID: TomatoReadyState(),
+    PauseReadyState.ID: PauseReadyState(),
 }

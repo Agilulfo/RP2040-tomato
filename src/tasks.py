@@ -35,6 +35,7 @@ class Runner:
     def run(self):
         # Necessary to avoid circula import
         from state_machine import get_state_machine
+
         events = []
         for task_name in self.tasks:
             task = get_task_registry().get(task_name)
