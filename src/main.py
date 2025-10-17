@@ -9,10 +9,6 @@ RGB_PIN = 23
 BTN_PIN = 24
 LED_PIN = 25
 
-# state names
-WAITING = "waiting"
-BLINKING = "blinking"
-
 # task names
 BUTTON = "button"
 BLINKER = "blinker"
@@ -28,47 +24,66 @@ class StateMachine:
             transition = self.current_state.handle_event(event)
             if transition:
                 (next_state, options) = transition
+                self.current_state.exit()
                 next_state.enter(options)
                 self.current_state = next_state
 
 
 # STATES
 
+WAITING = "waiting"
+
 
 class WaitingState:
     def handle_event(self, event):
-        if event == LONG_PRESSED:
-            return (states[BLINKING], {"color": GREEN})
-        elif event == SHORT_PRESSED:
-            return (states[BLINKING], {"color": BLUE})
+        if event == SHORT_PRESSED:
+            return (states[TOMATO_READY], None)
         return None
 
     def enter(self, _options):
-        # MAYBE think later what should happen here
-        # should I insert the tasks for listening button
-        # presses in here?
         pass
 
+    def exit(self):
+        pass
 
-class BlinkingState:
+TOMATO_READY = "tomato_ready"
+
+
+class TomatoReadyState:
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[BLINKING], {"color": GREEN})
+            return (states[WAITING], None)
         elif event == SHORT_PRESSED:
-            return (states[BLINKING], {"color": BLUE})
+            return (states[PAUSE_READY], None)
         return None
 
-    def enter(self, options):
+    def enter(self, _options):
         blinker = task_registry.get(BLINKER)
-        blinker.reset(options["color"])
+        blinker.reset(GREEN)
         runner.add_task(BLINKER)
 
     def exit(self):
-        # maybe reset blinker task?
-        # it is done anyway in the enter
-        # so for the time being no
         runner.remove_task(BLINKER)
-        # this should remove the task from the runner pausing the blinking
+
+
+PAUSE_READY = "pause_ready"
+
+
+class PauseReadyState:
+    def handle_event(self, event):
+        if event == LONG_PRESSED:
+            return (states[WAITING], None)
+        elif event == SHORT_PRESSED:
+            return (states[TOMATO_READY], None)
+        return None
+
+    def enter(self, _options):
+        blinker = task_registry.get(BLINKER)
+        blinker.reset(BLUE)
+        runner.add_task(BLINKER)
+
+    def exit(self):
+        runner.remove_task(BLINKER)
 
 
 # TASKS INFRASTRUCTURE
@@ -148,7 +163,11 @@ class Blinker:
 # INITIALIZATION
 
 # Global shared states
-states = {WAITING: WaitingState(), BLINKING: BlinkingState()}
+states = {
+    WAITING: WaitingState(),
+    TOMATO_READY: TomatoReadyState(),
+    PAUSE_READY: PauseReadyState(),
+}
 task_registry = TaskRegistry()
 state_machine = StateMachine()
 runner = Runner(state_machine)
