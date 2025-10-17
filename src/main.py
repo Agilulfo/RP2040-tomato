@@ -3,7 +3,8 @@ from rgb_led import RGBled
 from colors import OFF, GREEN
 from time import sleep
 from state_machine import get_state_machine
-from tasks import Blinker, get_runner, get_task_registry, Timer
+from tasks import Blinker, get_runner, get_task_registry, Timer, RunnerIndicator
+from machine import Pin
 
 # GPIO mapping
 RGB_PIN = 23
@@ -19,6 +20,7 @@ def init_device():
 
 def main():
     rgb, button = init_device()
+    blue_led = Pin(LED_PIN, Pin.OUT)
 
     # init sequence to allow
     # user to connect via serial port
@@ -29,15 +31,18 @@ def main():
     # register basic tasks
     blinker = Blinker(rgb, GREEN, 500)
     timer = Timer(rgb)
+    runner_indicator = RunnerIndicator(blue_led)
 
     task_registry = get_task_registry()
     task_registry.add(blinker, blinker.TASK_NAME)
     task_registry.add(button, button.TASK_NAME)
     task_registry.add(timer, timer.TASK_NAME)
+    task_registry.add(runner_indicator, runner_indicator.TASK_NAME)
 
     # init runner
     runner = get_runner()
     runner.add_task(UsrButton.TASK_NAME)
+    runner.add_task(runner_indicator.TASK_NAME)
 
     # init state machine
     # TODO: probably can be removed

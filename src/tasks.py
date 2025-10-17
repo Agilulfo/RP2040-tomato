@@ -130,3 +130,20 @@ class Timer:
         CG = AG - (AG - BG) * progress
         CB = AB - (AB - BB) * progress
         return (int(CR), int(CG), int(CB))
+
+
+class RunnerIndicator:
+    TASK_NAME = "runner_indicator"
+    PERIOD = 1000
+
+    def __init__(self, led):
+        self.led = led
+        self.last_flip = ticks_ms()
+
+    def run(self):
+        current_ticks = ticks_ms()
+        passed = ticks_delta(self.last_flip, current_ticks)
+        if passed >= self.PERIOD / 2:
+            self.led.toggle()
+            self.last_flip = current_ticks
+        return None
