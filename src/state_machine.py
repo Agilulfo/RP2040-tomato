@@ -51,7 +51,7 @@ class WorkReadyState:
         if event == LONG_PRESSED:
             return (states[WorkRunningState.ID], None)
         elif event == SHORT_PRESSED:
-            return (states[PauseReadyState.ID], None)
+            return (states[BreakReadyState.ID], None)
         return None
 
     def enter(self, _options):
@@ -63,8 +63,8 @@ class WorkReadyState:
         get_runner().remove_task(Blinker.TASK_NAME)
 
 
-class PauseReadyState:
-    ID = "pause_ready"
+class BreakReadyState:
+    ID = "break_ready"
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
@@ -122,7 +122,7 @@ class BreakRunningState:
 states = {
     WaitingState.ID: WaitingState(),
     WorkReadyState.ID: WorkReadyState(),
-    PauseReadyState.ID: PauseReadyState(),
+    BreakReadyState.ID: BreakReadyState(),
     BreakRunningState.ID: BreakRunningState(),
     WorkRunningState.ID: WorkRunningState(),
 }
