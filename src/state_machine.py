@@ -34,7 +34,7 @@ class WaitingState:
 
     def handle_event(self, event):
         if event == SHORT_PRESSED:
-            return (states[TomatoReadyState.ID], None)
+            return (states[WorkReadyState.ID], None)
         return None
 
     def enter(self, _options):
@@ -44,12 +44,12 @@ class WaitingState:
         pass
 
 
-class TomatoReadyState:
-    ID = "tomato_ready"
+class WorkReadyState:
+    ID = "work_ready"
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[TomatoRunningState.ID], None)
+            return (states[WorkRunningState.ID], None)
         elif event == SHORT_PRESSED:
             return (states[PauseReadyState.ID], None)
         return None
@@ -70,7 +70,7 @@ class PauseReadyState:
         if event == LONG_PRESSED:
             return (states[BreakRunningState.ID], None)
         elif event == SHORT_PRESSED:
-            return (states[TomatoReadyState.ID], None)
+            return (states[WorkReadyState.ID], None)
         return None
 
     def enter(self, _options):
@@ -82,10 +82,10 @@ class PauseReadyState:
         get_runner().remove_task(Blinker.TASK_NAME)
 
 
-class TomatoRunningState:
-    ID = "tomato_running"
-    TOMATO_DURATION = 60  # DEBUG amount
-    # TOMATO_DURATION = 60 * 25 # 25 minutes
+class WorkRunningState:
+    ID = "work_running"
+    WORK_DURATION = 60  # DEBUG amount
+    # WORK_DURATION = 60 * 25 # 25 minutes
 
     def handle_event(self, event):
         if event == LONG_PRESSED or event == Timer.FINISHED_EVENT:
@@ -94,7 +94,7 @@ class TomatoRunningState:
 
     def enter(self, _options):
         timer = get_task_registry().get(Timer.TASK_NAME)
-        timer.reset(self.TOMATO_DURATION)
+        timer.reset(self.WORK_DURATION)
         get_runner().add_task(timer.TASK_NAME)
 
     def exit(self):
@@ -121,8 +121,8 @@ class BreakRunningState:
 
 states = {
     WaitingState.ID: WaitingState(),
-    TomatoReadyState.ID: TomatoReadyState(),
+    WorkReadyState.ID: WorkReadyState(),
     PauseReadyState.ID: PauseReadyState(),
     BreakRunningState.ID: BreakRunningState(),
-    TomatoRunningState.ID: TomatoRunningState(),
+    WorkRunningState.ID: WorkRunningState(),
 }
