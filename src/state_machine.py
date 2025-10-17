@@ -68,7 +68,7 @@ class PauseReadyState:
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WaitingState.ID], None)
+            return (states[BreakRunningState.ID], None)
         elif event == SHORT_PRESSED:
             return (states[TomatoReadyState.ID], None)
         return None
@@ -84,7 +84,7 @@ class PauseReadyState:
 
 class TomatoRunningState:
     ID = "tomato_running"
-    TOMATO_DURATION = 20  # DEBUG amount
+    TOMATO_DURATION = 60  # DEBUG amount
     # TOMATO_DURATION = 60 * 25 # 25 minutes
 
     def handle_event(self, event):
@@ -100,10 +100,29 @@ class TomatoRunningState:
     def exit(self):
         get_runner().remove_task(Timer.TASK_NAME)
 
+class BreakRunningState:
+    ID = "break_running"
+    TIMER_DURATION = 20  # DEBUG amount
+    # TIMER_DURATION = 60 * 5 # 5 minutes
+
+    def handle_event(self, event):
+        if event == LONG_PRESSED or event == Timer.FINISHED_EVENT:
+            return (states[WaitingState.ID], None)
+        return None
+
+    def enter(self, _options):
+        timer = get_task_registry().get(Timer.TASK_NAME)
+        timer.reset(self.TIMER_DURATION)
+        get_runner().add_task(timer.TASK_NAME)
+
+    def exit(self):
+        get_runner().remove_task(Timer.TASK_NAME)
+
 
 states = {
     WaitingState.ID: WaitingState(),
     TomatoReadyState.ID: TomatoReadyState(),
     PauseReadyState.ID: PauseReadyState(),
+    BreakRunningState.ID: BreakRunningState(),
     TomatoRunningState.ID: TomatoRunningState(),
 }
