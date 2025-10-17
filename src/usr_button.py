@@ -1,5 +1,6 @@
 from machine import Pin
 from time import ticks_ms, ticks_add, sleep_ms
+from ticks import ticks_delta
 
 PRESSED = 0
 RELEASED = 1
@@ -25,7 +26,7 @@ class UsrButton:
         if self.previous_status != current_status:
             if current_status == RELEASED:
                 current_tick = ticks_ms()
-                duration = self._press_duration(current_tick)
+                duration = ticks_delta(self.pressed_at, current_tick)
                 print(f"the duration was {TICKS_MAX} - {duration}")
                 if duration < DURATION_TRESHOLD:
                     detected = SHORT_PRESSED
@@ -35,12 +36,6 @@ class UsrButton:
                 self.pressed_at = ticks_ms()
         self.previous_status = current_status
         return detected
-
-    def _press_duration(self, end_tick):
-        if self.pressed_at <= end_tick:
-            return end_tick - self.pressed_at
-        else:
-            return TICKS_MAX - self.pressed_at + end_tick
 
     def run(self):
         transition = self._detect_transition()
