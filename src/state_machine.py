@@ -1,5 +1,5 @@
 from colors import BLUE, GREEN
-from tasks import Blinker, HueLoop, Timer, get_runner, get_task_registry
+from tasks import Blinker, Breather, HueLoop, Timer, get_runner, get_task_registry
 from usr_button import LONG_PRESSED, SHORT_PRESSED
 
 STATE_MACHINE = None
@@ -56,12 +56,12 @@ class WorkReadyState:
         return None
 
     def enter(self):
-        blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(BLUE)
-        get_runner().add_task(Blinker.TASK_NAME)
+        breather = get_task_registry().get(Breather.TASK_NAME)
+        breather.reset(BLUE)
+        get_runner().add_task(breather.TASK_NAME)
 
     def exit(self):
-        get_runner().remove_task(Blinker.TASK_NAME)
+        get_runner().remove_task(Breather.TASK_NAME)
 
 
 class BreakReadyState:
@@ -75,12 +75,12 @@ class BreakReadyState:
         return None
 
     def enter(self):
-        blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(GREEN)
-        get_runner().add_task(Blinker.TASK_NAME)
+        breather = get_task_registry().get(Breather.TASK_NAME)
+        breather.reset(GREEN)
+        get_runner().add_task(breather.TASK_NAME)
 
     def exit(self):
-        get_runner().remove_task(Blinker.TASK_NAME)
+        get_runner().remove_task(Breather.TASK_NAME)
 
 
 class WorkRunningState:

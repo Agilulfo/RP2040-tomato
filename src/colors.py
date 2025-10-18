@@ -6,18 +6,14 @@ BLUE = (0, 0, 20)
 OFF = (0, 0, 0)
 
 
-class ColorIterator:
-    def __init__(self, colors):
-        self.colors = colors
-        self.index = 0
+def interpolate(start_color, end_color, progress):
+    AR, AG, AB = start_color
+    BR, BG, BB = end_color
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        color = self.colors[self.index]
-        self.index = (self.index + 1) % len(self.colors)
-        return color
+    CR = AR - (AR - BR) * progress
+    CG = AG - (AG - BG) * progress
+    CB = AB - (AB - BB) * progress
+    return (int(CR), int(CG), int(CB))
 
 
 # Got this from Gemini :-P

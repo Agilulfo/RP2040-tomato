@@ -1,6 +1,7 @@
+from math import cos, pi
 from time import ticks_ms, time
 
-from colors import GREEN, OFF, RED, hue_to_rgb
+from colors import GREEN, OFF, RED, hue_to_rgb, interpolate
 from ticks import ticks_delta
 
 RUNNER = None
@@ -112,7 +113,7 @@ class Timer:
         if elapsed >= self.duration:
             return self.FINISHED_EVENT
         progress = elapsed / self.duration
-        color = self.interpolate(progress)
+        color = interpolate(self.start_color, self.end_color, progress)
         self.rgb.set_color(color)
         return None
 
@@ -123,15 +124,6 @@ class Timer:
 
     def stop(self):
         self.reset(0)
-
-    def interpolate(self, progress):
-        AR, AG, AB = self.start_color
-        BR, BG, BB = self.end_color
-
-        CR = AR - (AR - BR) * progress
-        CG = AG - (AG - BG) * progress
-        CB = AB - (AB - BB) * progress
-        return (int(CR), int(CG), int(CB))
 
 
 class HueLoop:
@@ -159,6 +151,41 @@ class HueLoop:
     def reset(self):
         self.cycle_started_at = None
         self.rgb.set_color(OFF)
+
+    def stop(self):
+        self.reset()
+
+
+class Breather:
+    TASK_NAME = "breather"
+
+    def __init__(self, rgb, color, period):
+        self.rgb = rgb
+        self.color = color
+        self.period = period
+        self.reset()
+
+    def run(self):
+        current_ticks = ticks_ms()
+        passed = ticks_delta(self.cycle_start, current_ticks)
+        if passed >= self.period:
+            passed = 0
+            self.cycle_start = current_ticks
+        progress = passed / self.period
+        self.rgb.set_color(self._compute_color(progress))
+        return None
+
+    def reset(self, color=None):
+        if color:
+            self.color = color
+        self.rgb.set_color(OFF)
+        self.cycle_start = ticks_ms()
+
+    def _compute_color(self, linear_progress):
+        start = OFF
+        end = self.color
+        curved_progress = 1 - ((cos(2 * pi * linear_progress) + 1) / 2)
+        return interpolate(start, end, curved_progress)
 
     def stop(self):
         self.reset()
