@@ -1,5 +1,7 @@
+from time import sleep_ms, ticks_ms
+
 from machine import Pin
-from time import ticks_ms, sleep_ms
+
 from ticks import ticks_delta
 
 PRESSED = 0

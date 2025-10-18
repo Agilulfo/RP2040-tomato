@@ -1,16 +1,13 @@
-from usr_button import UsrButton
-from rgb_led import RGBled
 from colors import OFF
-from state_machine import get_state_machine
+from rgb_led import RGBled
 from tasks import (
     Blinker,
+    HueLoop,
+    Timer,
     get_runner,
     get_task_registry,
-    Timer,
-    RunnerIndicator,
-    HueLoop,
 )
-from machine import Pin
+from usr_button import UsrButton
 
 # GPIO mapping
 RGB_PIN = 23
@@ -26,28 +23,22 @@ def init_device():
 
 def main():
     rgb, button = init_device()
-    blue_led = Pin(LED_PIN, Pin.OUT)
 
     # register basic tasks
     blinker = Blinker(rgb, OFF, 500)
     timer = Timer(rgb)
-    runner_indicator = RunnerIndicator(blue_led)
     hue_loop = HueLoop(rgb)
 
     task_registry = get_task_registry()
     task_registry.add(blinker, blinker.TASK_NAME)
     task_registry.add(button, button.TASK_NAME)
     task_registry.add(timer, timer.TASK_NAME)
-    task_registry.add(runner_indicator, runner_indicator.TASK_NAME)
     task_registry.add(hue_loop, hue_loop.TASK_NAME)
 
     # init runner
     runner = get_runner()
     runner.add_task(UsrButton.TASK_NAME)
 
-    # init state machine
-    # TODO: probably can be removed
-    get_state_machine()
     while True:
         runner.run()
 

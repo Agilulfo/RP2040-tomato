@@ -1,7 +1,6 @@
 from machine import Pin
 from neopixel import NeoPixel
 
-
 NUM_PIXELS = 1  # Only one LED on the board
 
 

@@ -1,7 +1,6 @@
-from usr_button import LONG_PRESSED, SHORT_PRESSED
-from tasks import Blinker, get_runner, get_task_registry, Timer, HueLoop
 from colors import BLUE, GREEN
-
+from tasks import Blinker, HueLoop, Timer, get_runner, get_task_registry
+from usr_button import LONG_PRESSED, SHORT_PRESSED
 
 STATE_MACHINE = None
 TIMER_OVER_COLOR = (255, 0, 0)
