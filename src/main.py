@@ -1,7 +1,6 @@
 from usr_button import UsrButton
 from rgb_led import RGBled
-from colors import OFF, GREEN
-from time import sleep
+from colors import OFF
 from state_machine import get_state_machine
 from tasks import (
     Blinker,
@@ -29,14 +28,8 @@ def main():
     rgb, button = init_device()
     blue_led = Pin(LED_PIN, Pin.OUT)
 
-    # init sequence to allow
-    # user to connect via serial port
-    rgb.set_color(GREEN)
-    sleep(1)
-    rgb.set_color(OFF)
-
     # register basic tasks
-    blinker = Blinker(rgb, GREEN, 500)
+    blinker = Blinker(rgb, OFF, 500)
     timer = Timer(rgb)
     runner_indicator = RunnerIndicator(blue_led)
     hue_loop = HueLoop(rgb)
@@ -51,7 +44,6 @@ def main():
     # init runner
     runner = get_runner()
     runner.add_task(UsrButton.TASK_NAME)
-    # runner.add_task(runner_indicator.TASK_NAME)
 
     # init state machine
     # TODO: probably can be removed
