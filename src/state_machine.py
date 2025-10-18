@@ -1,9 +1,10 @@
 from usr_button import LONG_PRESSED, SHORT_PRESSED
 from tasks import Blinker, get_runner, get_task_registry, Timer, HueLoop
-from colors import BLUE, GREEN, RED
+from colors import BLUE, GREEN
 
 
 STATE_MACHINE = None
+TIMER_OVER_COLOR = (255, 0, 0)
 
 
 def get_state_machine():
@@ -138,7 +139,7 @@ class WorkOverState:
 
     def enter(self, _options):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(RED)
+        blinker.reset(TIME_OVER_COLOR, compensate=False)
         get_runner().add_task(Blinker.TASK_NAME)
 
     def exit(self):
@@ -157,7 +158,7 @@ class BreakOverState:
 
     def enter(self, _options):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(RED)
+        blinker.reset(TIME_OVER_COLOR, compensate=False)
         get_runner().add_task(Blinker.TASK_NAME)
 
     def exit(self):

@@ -1,13 +1,9 @@
 import math
 
-# Set the color for the first (and only) pixel
-# Colors are (Red, Green, Blue) with values from 0-255
-RED = (10, 0, 0)
-GREEN = (0, 5, 0)
-BLUE = (0, 0, 10)
+RED = (20, 0, 0)
+GREEN = (0, 20, 0)
+BLUE = (0, 0, 20)
 OFF = (0, 0, 0)
-
-RGB = [("red", RED), ("green", GREEN), ("blue", BLUE)]
 
 
 class ColorIterator:
@@ -43,7 +39,7 @@ def hue_to_rgb(hue_angle: float) -> tuple[int, int, int]:
 
     # Assume maximum saturation and mid-lightness (for vibrant colors)
     S = 1.0
-    L = 0.02  # this value seem to produce an acceptable brightness
+    L = 0.1  # this value seem to produce an acceptable brightness
 
     # Step 1: Calculate Chroma (C)
     # C = (1 - |2L - 1|) * S

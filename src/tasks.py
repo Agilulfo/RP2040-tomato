@@ -74,7 +74,8 @@ class Blinker:
             self.last_flip = current_ticks
         return None
 
-    def reset(self, color=None):
+    def reset(self, color=None, compensate=True):
+        self.compensate = compensate
         if color:
             self.color = color
         self.rgb.set_color(OFF)
@@ -86,7 +87,7 @@ class Blinker:
             self.rgb.set_color(OFF)
             self.on = False
         else:
-            self.rgb.set_color(self.color)
+            self.rgb.set_color(self.color, compensate=self.compensate)
             self.on = True
 
     def stop(self):
