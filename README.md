@@ -2,6 +2,10 @@
 
 A minimalist timer for the [Pomodoro Technique](https://en.wikipedia.org/wiki/Pomodoro_Technique).
 
+Click on the image below to watch a demo on youtube.
+
+[![Watch the project demo video on YouTube](https://img.youtube.com/vi/5J5LkFbHoXA/maxresdefault.jpg)](https://www.youtube.com/watch?v=5J5LkFbHoXA)
+
 I haven't had this much fun developing this little thing in a long time!
 
 Building a little standalone device that can sit on my desk and track my work time has been on my bucket list for a while, so I'm incredibly happy I've finally done it. Being able to run MicroPython on this chip is a blessing.
