@@ -18,15 +18,14 @@ def get_state_machine():
 class StateMachine:
     def start_from(self, state):
         self.current_state = state
-        state.enter(None)
+        state.enter()
 
     def handle_events(self, events):
         for event in events:
-            transition = self.current_state.handle_event(event)
-            if transition:
-                (next_state, options) = transition
+            next_state = self.current_state.handle_event(event)
+            if next_state:
                 self.current_state.exit()
-                next_state.enter(options)
+                next_state.enter()
                 self.current_state = next_state
 
 
@@ -35,10 +34,10 @@ class WaitingState:
 
     def handle_event(self, event):
         if event == SHORT_PRESSED:
-            return (states[WorkReadyState.ID], None)
+            return states[WorkReadyState.ID]
         return None
 
-    def enter(self, _options):
+    def enter(self):
         looper = get_task_registry().get(HueLoop.TASK_NAME)
         looper.reset()
         get_runner().add_task(HueLoop.TASK_NAME)
@@ -52,12 +51,12 @@ class WorkReadyState:
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WorkRunningState.ID], None)
+            return states[WorkRunningState.ID]
         elif event == SHORT_PRESSED:
-            return (states[BreakReadyState.ID], None)
+            return states[BreakReadyState.ID]
         return None
 
-    def enter(self, _options):
+    def enter(self):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
         blinker.reset(BLUE)
         get_runner().add_task(Blinker.TASK_NAME)
@@ -71,12 +70,12 @@ class BreakReadyState:
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[BreakRunningState.ID], None)
+            return states[BreakRunningState.ID]
         elif event == SHORT_PRESSED:
-            return (states[WorkReadyState.ID], None)
+            return states[WorkReadyState.ID]
         return None
 
-    def enter(self, _options):
+    def enter(self):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
         blinker.reset(GREEN)
         get_runner().add_task(Blinker.TASK_NAME)
@@ -92,12 +91,12 @@ class WorkRunningState:
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WaitingState.ID], None)
+            return states[WaitingState.ID]
         elif event == Timer.FINISHED_EVENT:
-            return (states[WorkOverState.ID], None)
+            return states[WorkOverState.ID]
         return None
 
-    def enter(self, _options):
+    def enter(self):
         timer = get_task_registry().get(Timer.TASK_NAME)
         timer.reset(self.WORK_DURATION)
         get_runner().add_task(timer.TASK_NAME)
@@ -113,12 +112,12 @@ class BreakRunningState:
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WaitingState.ID], None)
+            return states[WaitingState.ID]
         elif event == Timer.FINISHED_EVENT:
-            return (states[BreakOverState.ID], None)
+            return states[BreakOverState.ID]
         return None
 
-    def enter(self, _options):
+    def enter(self):
         timer = get_task_registry().get(Timer.TASK_NAME)
         timer.reset(self.TIMER_DURATION)
         get_runner().add_task(timer.TASK_NAME)
@@ -132,14 +131,14 @@ class WorkOverState:
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WaitingState.ID], None)
+            return states[WaitingState.ID]
         elif event == SHORT_PRESSED:
-            return (states[BreakRunningState.ID], None)
+            return states[BreakRunningState.ID]
         return None
 
-    def enter(self, _options):
+    def enter(self):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(TIME_OVER_COLOR, compensate=False)
+        blinker.reset(TIMER_OVER_COLOR, compensate=False)
         get_runner().add_task(Blinker.TASK_NAME)
 
     def exit(self):
@@ -151,14 +150,14 @@ class BreakOverState:
 
     def handle_event(self, event):
         if event == LONG_PRESSED:
-            return (states[WaitingState.ID], None)
+            return states[WaitingState.ID]
         elif event == SHORT_PRESSED:
-            return (states[WorkRunningState.ID], None)
+            return states[WorkRunningState.ID]
         return None
 
-    def enter(self, _options):
+    def enter(self):
         blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(TIME_OVER_COLOR, compensate=False)
+        blinker.reset(TIMER_OVER_COLOR, compensate=False)
         get_runner().add_task(Blinker.TASK_NAME)
 
     def exit(self):
