@@ -1,9 +1,13 @@
 from colors import BLUE, GREEN
+from pwm_led import DimmedLED
 from tasks import Blinker, Breather, HueLoop, Timer, get_runner, get_task_registry
 from usr_button import LONG_PRESSED, SHORT_PRESSED
 
 STATE_MACHINE = None
 TIMER_OVER_COLOR = (255, 0, 0)
+LED_PIN = 25
+
+work_indicator = DimmedLED(LED_PIN)
 
 
 def get_state_machine():
@@ -99,9 +103,11 @@ class WorkRunningState:
         timer = get_task_registry().get(Timer.TASK_NAME)
         timer.reset(self.WORK_DURATION)
         get_runner().add_task(timer.TASK_NAME)
+        work_indicator.on()
 
     def exit(self):
         get_runner().remove_task(Timer.TASK_NAME)
+        work_indicator.off()
 
 
 class BreakRunningState:
@@ -139,9 +145,11 @@ class WorkOverState:
         blinker = get_task_registry().get(Blinker.TASK_NAME)
         blinker.reset(TIMER_OVER_COLOR, compensate=False)
         get_runner().add_task(Blinker.TASK_NAME)
+        work_indicator.on()
 
     def exit(self):
         get_runner().remove_task(Blinker.TASK_NAME)
+        work_indicator.on()
 
 
 class BreakOverState:
