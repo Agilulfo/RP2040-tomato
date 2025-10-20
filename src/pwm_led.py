@@ -17,11 +17,13 @@ class DimmedLED:
         self.level = level
 
     def on(self):
-        self.pwm.duty_u16(__class__.level_to_duty(self.level))
+        duty = __class__.level_to_duty(self.level)
+        self.pwm.duty_u16(duty)
         self.is_on = True
 
     def off(self):
-        self.pwm.duty_u16(__class__.level_to_duty(0))
+        duty = __class__.level_to_duty(0)
+        self.pwm.duty_u16(duty)
         self.is_on = False
 
     def toggle(self):

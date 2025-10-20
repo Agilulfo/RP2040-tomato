@@ -149,7 +149,7 @@ class WorkOverState:
 
     def exit(self):
         get_runner().remove_task(Blinker.TASK_NAME)
-        work_indicator.on()
+        work_indicator.off()
 
 
 class BreakOverState:
