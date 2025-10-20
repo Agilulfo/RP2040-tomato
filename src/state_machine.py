@@ -178,5 +178,5 @@ states = {
     BreakRunningState.ID: BreakRunningState(),
     WorkRunningState.ID: WorkRunningState(),
     WorkOverState.ID: WorkOverState(),
-    BreakOverState.ID: WorkOverState(),
+    BreakOverState.ID: BreakOverState(),
 }
