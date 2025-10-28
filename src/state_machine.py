@@ -31,8 +31,8 @@ class StateMachine:
 
         # init states
         waiting_state = WaitingState(self.rgb_led)
-        work_ready_state = WorkReadyState(self.rgb_led)
-        break_ready_state = BreakReadyState(self.rgb_led)
+        work_ready_state = TimerReadyState(self.rgb_led, BLUE)
+        break_ready_state = TimerReadyState(self.rgb_led, GREEN)
         work_running_state = TimerRunningState(self.rgb_led, event, True)
         break_running_state = TimerRunningState(self.rgb_led, event, False)
         work_over_state = TimerOverState(self.rgb_led)
@@ -41,7 +41,7 @@ class StateMachine:
         # link states
         waiting_state.set_next(work_ready_state)
         work_ready_state.set_next(break_ready_state, work_running_state)
-        break_ready_state.set_next(work_ready_state)
+        break_ready_state.set_next(work_ready_state, break_running_state)
         work_running_state.set_next(waiting_state, work_over_state)
         break_running_state.set_next(waiting_state, break_over_state)
         work_over_state.set_next(break_running_state, waiting_state)
@@ -93,10 +93,9 @@ class WaitingState:
             return None
 
 
-class WorkReadyState:
-    def __init__(self, rgb_led):
-        self.rgb = rgb_led
-        self.breather = Breather(rgb_led, BLUE, 1000)
+class TimerReadyState:
+    def __init__(self, rgb_led, color):
+        self.breather = Breather(rgb_led, color, 1000)
 
     def set_next(self, next_short, next_long):
         self.next_short = next_short
@@ -116,31 +115,6 @@ class WorkReadyState:
             return self.next_long
         elif event_type == SHORT_PRESSED:
             return self.next_short
-        return None
-
-
-class BreakReadyState:
-    def __init__(self, rgb_led):
-        self.rgb = rgb_led
-        self.breather = Breather(rgb_led, GREEN, 1000)
-
-    def set_next(self, state):
-        self.next = state
-
-    async def run(self):
-        self.task = asyncio.current_task()
-        try:
-            while True:
-                self.breather.run()
-                await asyncio.sleep_ms(20)
-        except asyncio.CancelledError:
-            self.breather.stop()
-
-    def handle_event(self, event_type):
-        if event_type == LONG_PRESSED:
-            return None
-        elif event_type == SHORT_PRESSED:
-            return self.next
         return None
 
 
