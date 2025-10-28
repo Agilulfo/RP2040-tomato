@@ -126,14 +126,14 @@ class TimerRunningState:
         self.event = event
         self.timer = Timer(rgb_led)
         self.work_led = work_led
-        # if is_work:
-        #     self.duration = 60 * 25  # 25 minutes
-        # else:
-        #     self.duration = 60 * 5  # 5 minutes
         if is_work:
-            self.duration = 10
+            self.duration = 60 * 25  # 25 minutes
         else:
-            self.duration = 5
+            self.duration = 60 * 5  # 5 minutes
+        # if is_work:
+        #     self.duration = 10
+        # else:
+        #     self.duration = 5
 
     def set_next(self, next_long, next_finished):
         self.next_finished = next_finished
