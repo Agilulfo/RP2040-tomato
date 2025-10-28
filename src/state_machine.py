@@ -5,21 +5,12 @@ from colors import BLUE, GREEN, OFF, hue_to_rgb
 from pwm_led import DimmedLED
 from tasks import Blinker, Breather, Timer, get_runner, get_task_registry
 from ticks import ticks_delta
-from usr_button import LONG_PRESSED, SHORT_PRESSED,  ButtonListener
+from usr_button import LONG_PRESSED, SHORT_PRESSED, ButtonListener
 
-STATE_MACHINE = None
 TIMER_OVER_COLOR = (255, 0, 0)
 LED_PIN = 25
 
 work_indicator = DimmedLED(LED_PIN)
-
-
-def get_state_machine():
-    global STATE_MACHINE
-    if STATE_MACHINE is None:
-        STATE_MACHINE = StateMachine()
-        STATE_MACHINE.start_from(states[WaitingState.ID])
-    return STATE_MACHINE
 
 
 class StateMachine:
@@ -29,18 +20,54 @@ class StateMachine:
 
     async def run(self):
         print("running state machine")
-        waiting_loop = WaitingState(self.rgb_led)
-        button_listener = ButtonListener(self.button_pin)
-        button = asyncio.create_task(button_listener.run())
-        asyncio.create_task(waiting_loop.run())
 
-        await button
+        # I wish I could create multiple events
+        # and wait on the first event happening
+        # micropython asyncio.wait() is not implemented
+        # so I can only use one event that I need to share
+        event = asyncio.Event()
+
+        # This task should never stop
+        button_listener = ButtonListener(self.button_pin, event)
+        asyncio.create_task(button_listener.run())
+
+        # init states
+        waiting_state = WaitingState(self.rgb_led)
+        work_ready_state = WorkReadyState(self.rgb_led)
+
+        # link states
+        waiting_state.set_next(work_ready_state)
+        work_ready_state.set_next(waiting_state)
+
+        # init state machine
+        current_state = waiting_state
+        current_task = asyncio.create_task(current_state.run())
+
+        # run loop
+        while True:
+            await event.wait()
+
+            event_type = event.type
+            event.type = None
+
+            next_state = current_state.handle_event(event_type)
+
+            if next_state:
+                current_task.cancel()
+                current_state = next_state
+                current_task = asyncio.create_task(next_state.run())
+
+            event.clear()
+
 
 class WaitingState:
     PERIOD = 5000
 
     def __init__(self, rgb_led):
         self.rgb = rgb_led
+
+    def set_next(self, state):
+        self.next = state
 
     async def run(self):
         self.reset()
@@ -73,24 +100,36 @@ class WaitingState:
     def stop(self):
         self.reset()
 
+    def handle_event(self, event_type):
+        if event_type == SHORT_PRESSED:
+            return self.next
+        else:
+            return None
+
 
 class WorkReadyState:
-    ID = "work_ready"
+    def __init__(self, rgb_led):
+        self.rgb = rgb_led
+        self.breather = Breather(rgb_led, BLUE, 1000)
 
-    def handle_event(self, event):
-        if event == LONG_PRESSED:
-            return states[WorkRunningState.ID]
-        elif event == SHORT_PRESSED:
-            return states[BreakReadyState.ID]
+    def set_next(self, state):
+        self.next = state
+
+    async def run(self):
+        self.task = asyncio.current_task()
+        try:
+            while True:
+                self.breather.run()
+                await asyncio.sleep_ms(20)
+        except asyncio.CancelledError:
+            self.breather.stop()
+
+    def handle_event(self, event_type):
+        if event_type == LONG_PRESSED:
+            return None
+        elif event_type == SHORT_PRESSED:
+            return self.next
         return None
-
-    def enter(self):
-        breather = get_task_registry().get(Breather.TASK_NAME)
-        breather.reset(BLUE)
-        get_runner().add_task(breather.TASK_NAME)
-
-    def exit(self):
-        get_runner().remove_task(Breather.TASK_NAME)
 
 
 class BreakReadyState:
@@ -187,20 +226,6 @@ class BreakOverState:
             return states[WorkRunningState.ID]
         return None
 
-    def enter(self):
-        blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(TIMER_OVER_COLOR, compensate=False)
-        get_runner().add_task(Blinker.TASK_NAME)
-
-    def exit(self):
-        get_runner().remove_task(Blinker.TASK_NAME)
-
 
 states = {
-    WorkReadyState.ID: WorkReadyState(),
-    BreakReadyState.ID: BreakReadyState(),
-    BreakRunningState.ID: BreakRunningState(),
-    WorkRunningState.ID: WorkRunningState(),
-    WorkOverState.ID: WorkOverState(),
-    BreakOverState.ID: BreakOverState(),
 }
