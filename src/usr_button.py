@@ -1,6 +1,5 @@
+import asyncio
 from time import sleep_ms, ticks_ms
-
-from machine import Pin
 
 from ticks import ticks_delta
 
@@ -13,12 +12,9 @@ LONG_PRESSED = "long"
 DURATION_TRESHOLD = 300
 
 
-class UsrButton:
-    TASK_NAME = "button"
-
-    def __init__(self, gpio):
-        self.pin = Pin(gpio, Pin.IN, Pin.PULL_UP)
-        # reading immediatelly cause issue, wait a little
+class ButtonListener:
+    def __init__(self, pin):
+        self.pin = pin
         sleep_ms(100)
         self.previous_status = self.pin.value()
 
@@ -38,6 +34,9 @@ class UsrButton:
         self.previous_status = current_status
         return detected
 
-    def run(self):
-        transition = self._detect_transition()
-        return transition
+    async def run(self):
+        while True:
+            transition = self._detect_transition()
+            if transition:
+                print(f"detected {transition}")
+            await asyncio.sleep_ms(10)

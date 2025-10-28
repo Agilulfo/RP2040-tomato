@@ -5,7 +5,7 @@ from colors import BLUE, GREEN, OFF, hue_to_rgb
 from pwm_led import DimmedLED
 from tasks import Blinker, Breather, Timer, get_runner, get_task_registry
 from ticks import ticks_delta
-from usr_button import LONG_PRESSED, SHORT_PRESSED
+from usr_button import LONG_PRESSED, SHORT_PRESSED,  ButtonListener
 
 STATE_MACHINE = None
 TIMER_OVER_COLOR = (255, 0, 0)
@@ -23,14 +23,18 @@ def get_state_machine():
 
 
 class StateMachine:
-    def __init__(self, rgb_led):
+    def __init__(self, rgb_led, button_pin):
         self.rgb_led = rgb_led
+        self.button_pin = button_pin
 
     async def run(self):
         print("running state machine")
-        current_state = WaitingState(self.rgb_led)
-        await current_state.run()
+        waiting_loop = WaitingState(self.rgb_led)
+        button_listener = ButtonListener(self.button_pin)
+        button = asyncio.create_task(button_listener.run())
+        asyncio.create_task(waiting_loop.run())
 
+        await button
 
 class WaitingState:
     PERIOD = 5000
