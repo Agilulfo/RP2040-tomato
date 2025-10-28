@@ -1,6 +1,10 @@
-from colors import BLUE, GREEN
+import asyncio
+from time import ticks_ms
+
+from colors import BLUE, GREEN, OFF, hue_to_rgb
 from pwm_led import DimmedLED
-from tasks import Blinker, Breather, HueLoop, Timer, get_runner, get_task_registry
+from tasks import Blinker, Breather, Timer, get_runner, get_task_registry
+from ticks import ticks_delta
 from usr_button import LONG_PRESSED, SHORT_PRESSED
 
 STATE_MACHINE = None
@@ -19,34 +23,51 @@ def get_state_machine():
 
 
 class StateMachine:
-    def start_from(self, state):
-        self.current_state = state
-        state.enter()
+    def __init__(self, rgb_led):
+        self.rgb_led = rgb_led
 
-    def handle_events(self, events):
-        for event in events:
-            next_state = self.current_state.handle_event(event)
-            if next_state:
-                self.current_state.exit()
-                next_state.enter()
-                self.current_state = next_state
+    async def run(self):
+        print("running state machine")
+        current_state = WaitingState(self.rgb_led)
+        await current_state.run()
 
 
 class WaitingState:
-    ID = "waiting"
+    PERIOD = 5000
 
-    def handle_event(self, event):
-        if event == SHORT_PRESSED:
-            return states[WorkReadyState.ID]
+    def __init__(self, rgb_led):
+        self.rgb = rgb_led
+
+    async def run(self):
+        self.reset()
+        try:
+            while True:
+                self.run_color()
+                await asyncio.sleep_ms(2)
+        except asyncio.CancelledError:
+            self.stop()
+
+    def run_color(self):
+        now = ticks_ms()
+        if self.cycle_started_at is None:
+            self.cycle_started_at = now
+        elapsed = ticks_delta(self.cycle_started_at, now)
+        if elapsed > self.PERIOD:
+            self.cycle_started_at = now
+            elapsed = 0
+
+        angle = elapsed / self.PERIOD * 360
+        color = hue_to_rgb(angle)
+        self.rgb.set_color(color)
+
         return None
 
-    def enter(self):
-        looper = get_task_registry().get(HueLoop.TASK_NAME)
-        looper.reset()
-        get_runner().add_task(HueLoop.TASK_NAME)
+    def reset(self):
+        self.cycle_started_at = None
+        self.rgb.set_color(OFF)
 
-    def exit(self):
-        get_runner().remove_task(HueLoop.TASK_NAME)
+    def stop(self):
+        self.reset()
 
 
 class WorkReadyState:
@@ -172,7 +193,6 @@ class BreakOverState:
 
 
 states = {
-    WaitingState.ID: WaitingState(),
     WorkReadyState.ID: WorkReadyState(),
     BreakReadyState.ID: BreakReadyState(),
     BreakRunningState.ID: BreakRunningState(),
