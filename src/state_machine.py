@@ -35,11 +35,15 @@ class StateMachine:
         waiting_state = WaitingState(self.rgb_led)
         work_ready_state = WorkReadyState(self.rgb_led)
         break_ready_state = BreakReadyState(self.rgb_led)
+        work_running_state = TimerRunningState(self.rgb_led, event, True)
+        break_running_state = TimerRunningState(self.rgb_led, event, False)
 
-        # link states
+        # link states (short, long, timeout)
         waiting_state.set_next(work_ready_state)
-        work_ready_state.set_next(break_ready_state)
+        work_ready_state.set_next(break_ready_state, work_running_state)
         break_ready_state.set_next(work_ready_state)
+        work_running_state.set_next(waiting_state, break_running_state)
+        break_running_state.set_next(waiting_state, work_running_state)
 
         # init state machine
         current_state = waiting_state
@@ -114,8 +118,9 @@ class WorkReadyState:
         self.rgb = rgb_led
         self.breather = Breather(rgb_led, BLUE, 1000)
 
-    def set_next(self, state):
-        self.next = state
+    def set_next(self, next_short, next_long):
+        self.next_short = next_short
+        self.next_long = next_long
 
     async def run(self):
         self.task = asyncio.current_task()
@@ -128,9 +133,9 @@ class WorkReadyState:
 
     def handle_event(self, event_type):
         if event_type == LONG_PRESSED:
-            return None
+            return self.next_long
         elif event_type == SHORT_PRESSED:
-            return self.next
+            return self.next_short
         return None
 
 
@@ -158,48 +163,42 @@ class BreakReadyState:
             return self.next
         return None
 
-class WorkRunningState:
-    ID = "work_running"
-    # WORK_DURATION = 20  # DEBUG amount
-    WORK_DURATION = 60 * 25  # 25 minutes
 
-    def handle_event(self, event):
-        if event == LONG_PRESSED:
-            return states[WaitingState.ID]
-        elif event == Timer.FINISHED_EVENT:
-            return states[WorkOverState.ID]
+class TimerRunningState:
+    def __init__(self, rgb_led, event, is_work):
+        self.event = event
+        self.timer = Timer(rgb_led)
+        # if is_work:
+        #     self.duration = 60 * 25  # 25 minutes
+        # else:
+        #     self.duration = 60 * 5  # 5 minutes
+        if is_work:
+            self.duration = 10
+        else:
+            self.duration = 5
+
+    def set_next(self, next_long, next_finished):
+        self.next_finished = next_finished
+        self.next_long = next_long
+
+    async def run(self):
+        self.timer.reset(self.duration)
+        try:
+            while True:
+                event_type = self.timer.run()
+                if event_type:
+                    self.event.type = event_type
+                    self.event.set()
+                await asyncio.sleep_ms(500)
+        except asyncio.CancelledError:
+            self.timer.stop()
+
+    def handle_event(self, event_type):
+        if event_type == LONG_PRESSED:
+            return self.next_long
+        elif event_type == self.timer.FINISHED_EVENT:
+            return self.next_finished
         return None
-
-    def enter(self):
-        timer = get_task_registry().get(Timer.TASK_NAME)
-        timer.reset(self.WORK_DURATION)
-        get_runner().add_task(timer.TASK_NAME)
-        work_indicator.on()
-
-    def exit(self):
-        get_runner().remove_task(Timer.TASK_NAME)
-        work_indicator.off()
-
-
-class BreakRunningState:
-    ID = "break_running"
-    # TIMER_DURATION = 10  # DEBUG amount
-    TIMER_DURATION = 60 * 5  # 5 minutes
-
-    def handle_event(self, event):
-        if event == LONG_PRESSED:
-            return states[WaitingState.ID]
-        elif event == Timer.FINISHED_EVENT:
-            return states[BreakOverState.ID]
-        return None
-
-    def enter(self):
-        timer = get_task_registry().get(Timer.TASK_NAME)
-        timer.reset(self.TIMER_DURATION)
-        get_runner().add_task(timer.TASK_NAME)
-
-    def exit(self):
-        get_runner().remove_task(Timer.TASK_NAME)
 
 
 class WorkOverState:
@@ -209,7 +208,7 @@ class WorkOverState:
         if event == LONG_PRESSED:
             return states[WaitingState.ID]
         elif event == SHORT_PRESSED:
-            return states[BreakRunningState.ID]
+            return None  # states[BreakRunningState.ID]
         return None
 
     def enter(self):
@@ -230,9 +229,8 @@ class BreakOverState:
         if event == LONG_PRESSED:
             return states[WaitingState.ID]
         elif event == SHORT_PRESSED:
-            return states[WorkRunningState.ID]
+            return None  # states[WorkRunningState.ID]
         return None
 
 
-states = {
-}
+states = {}
