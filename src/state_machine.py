@@ -34,10 +34,12 @@ class StateMachine:
         # init states
         waiting_state = WaitingState(self.rgb_led)
         work_ready_state = WorkReadyState(self.rgb_led)
+        break_ready_state = BreakReadyState(self.rgb_led)
 
         # link states
         waiting_state.set_next(work_ready_state)
-        work_ready_state.set_next(waiting_state)
+        work_ready_state.set_next(break_ready_state)
+        break_ready_state.set_next(work_ready_state)
 
         # init state machine
         current_state = waiting_state
@@ -133,23 +135,28 @@ class WorkReadyState:
 
 
 class BreakReadyState:
-    ID = "break_ready"
+    def __init__(self, rgb_led):
+        self.rgb = rgb_led
+        self.breather = Breather(rgb_led, GREEN, 1000)
 
-    def handle_event(self, event):
-        if event == LONG_PRESSED:
-            return states[BreakRunningState.ID]
-        elif event == SHORT_PRESSED:
-            return states[WorkReadyState.ID]
+    def set_next(self, state):
+        self.next = state
+
+    async def run(self):
+        self.task = asyncio.current_task()
+        try:
+            while True:
+                self.breather.run()
+                await asyncio.sleep_ms(20)
+        except asyncio.CancelledError:
+            self.breather.stop()
+
+    def handle_event(self, event_type):
+        if event_type == LONG_PRESSED:
+            return None
+        elif event_type == SHORT_PRESSED:
+            return self.next
         return None
-
-    def enter(self):
-        breather = get_task_registry().get(Breather.TASK_NAME)
-        breather.reset(GREEN)
-        get_runner().add_task(breather.TASK_NAME)
-
-    def exit(self):
-        get_runner().remove_task(Breather.TASK_NAME)
-
 
 class WorkRunningState:
     ID = "work_running"
