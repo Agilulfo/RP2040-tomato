@@ -8,13 +8,12 @@ from usr_button import LONG_PRESSED, SHORT_PRESSED, ButtonListener
 TIMER_OVER_COLOR = (255, 0, 0)
 LED_PIN = 25
 
-work_indicator = DimmedLED(LED_PIN)
-
 
 class StateMachine:
     def __init__(self, rgb_led, button_pin):
         self.rgb_led = rgb_led
         self.button_pin = button_pin
+        self.work_indicator = DimmedLED(LED_PIN)
 
     async def run(self):
         print("running state machine")
@@ -30,12 +29,16 @@ class StateMachine:
         asyncio.create_task(button_listener.run())
 
         # init states
+        work_kwargs = {"work_led": self.work_indicator}
+
         waiting_state = WaitingState(self.rgb_led)
         work_ready_state = TimerReadyState(self.rgb_led, BLUE)
         break_ready_state = TimerReadyState(self.rgb_led, GREEN)
-        work_running_state = TimerRunningState(self.rgb_led, event, True)
-        break_running_state = TimerRunningState(self.rgb_led, event, False)
-        work_over_state = TimerOverState(self.rgb_led)
+        work_running_state = TimerRunningState(
+            self.rgb_led, event, is_work=True, **work_kwargs
+        )
+        break_running_state = TimerRunningState(self.rgb_led, event)
+        work_over_state = TimerOverState(self.rgb_led, **work_kwargs)
         break_over_state = TimerOverState(self.rgb_led)
 
         # link states
@@ -119,9 +122,10 @@ class TimerReadyState:
 
 
 class TimerRunningState:
-    def __init__(self, rgb_led, event, is_work):
+    def __init__(self, rgb_led, event, is_work=False, work_led=None):
         self.event = event
         self.timer = Timer(rgb_led)
+        self.work_led = work_led
         # if is_work:
         #     self.duration = 60 * 25  # 25 minutes
         # else:
@@ -137,6 +141,8 @@ class TimerRunningState:
 
     async def run(self):
         self.timer.reset(self.duration)
+        if self.work_led:
+            self.work_led.on()
         try:
             while True:
                 event_type = self.timer.run()
@@ -146,6 +152,8 @@ class TimerRunningState:
                 await asyncio.sleep_ms(500)
         except asyncio.CancelledError:
             self.timer.stop()
+            if self.work_led:
+                self.work_led.off()
 
     def handle_event(self, event_type):
         if event_type == LONG_PRESSED:
@@ -156,22 +164,27 @@ class TimerRunningState:
 
 
 class TimerOverState:
-    def __init__(self, rgb_led):
+    def __init__(self, rgb_led, work_led=None):
         self.rgb = rgb_led
         self.blinker = Blinker(rgb_led, TIMER_OVER_COLOR, 1000)
         self.blinker.reset(compensate=False)
+        self.work_led = work_led
 
     def set_next(self, next_short, next_long):
         self.next_short = next_short
         self.next_long = next_long
 
     async def run(self):
+        if self.work_led:
+            self.work_led.on()
         try:
             while True:
                 self.blinker.run()
                 await asyncio.sleep_ms(20)
         except asyncio.CancelledError:
             self.blinker.stop()
+            if self.work_led:
+                self.work_led.off()
 
     def handle_event(self, event_type):
         if event_type == LONG_PRESSED:
