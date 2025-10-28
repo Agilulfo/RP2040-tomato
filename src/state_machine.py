@@ -1,10 +1,8 @@
 import asyncio
-from time import ticks_ms
 
-from colors import BLUE, GREEN, OFF, hue_to_rgb
+from colors import BLUE, GREEN
 from pwm_led import DimmedLED
-from tasks import Blinker, Breather, Timer, get_runner, get_task_registry
-from ticks import ticks_delta
+from tasks import Blinker, Breather, Timer, HueLoop
 from usr_button import LONG_PRESSED, SHORT_PRESSED, ButtonListener
 
 TIMER_OVER_COLOR = (255, 0, 0)
@@ -37,13 +35,17 @@ class StateMachine:
         break_ready_state = BreakReadyState(self.rgb_led)
         work_running_state = TimerRunningState(self.rgb_led, event, True)
         break_running_state = TimerRunningState(self.rgb_led, event, False)
+        work_over_state = TimerOverState(self.rgb_led)
+        break_over_state = TimerOverState(self.rgb_led)
 
-        # link states (short, long, timeout)
+        # link states
         waiting_state.set_next(work_ready_state)
         work_ready_state.set_next(break_ready_state, work_running_state)
         break_ready_state.set_next(work_ready_state)
-        work_running_state.set_next(waiting_state, break_running_state)
-        break_running_state.set_next(waiting_state, work_running_state)
+        work_running_state.set_next(waiting_state, work_over_state)
+        break_running_state.set_next(waiting_state, break_over_state)
+        work_over_state.set_next(break_running_state, waiting_state)
+        break_over_state.set_next(work_running_state, waiting_state)
 
         # init state machine
         current_state = waiting_state
@@ -70,41 +72,19 @@ class WaitingState:
     PERIOD = 5000
 
     def __init__(self, rgb_led):
-        self.rgb = rgb_led
+        self.hue_loop = HueLoop(rgb_led)
 
     def set_next(self, state):
         self.next = state
 
     async def run(self):
-        self.reset()
+        self.hue_loop.reset()
         try:
             while True:
-                self.run_color()
+                self.hue_loop.run()
                 await asyncio.sleep_ms(2)
         except asyncio.CancelledError:
-            self.stop()
-
-    def run_color(self):
-        now = ticks_ms()
-        if self.cycle_started_at is None:
-            self.cycle_started_at = now
-        elapsed = ticks_delta(self.cycle_started_at, now)
-        if elapsed > self.PERIOD:
-            self.cycle_started_at = now
-            elapsed = 0
-
-        angle = elapsed / self.PERIOD * 360
-        color = hue_to_rgb(angle)
-        self.rgb.set_color(color)
-
-        return None
-
-    def reset(self):
-        self.cycle_started_at = None
-        self.rgb.set_color(OFF)
-
-    def stop(self):
-        self.reset()
+            self.hue_loop.stop()
 
     def handle_event(self, event_type):
         if event_type == SHORT_PRESSED:
@@ -201,36 +181,27 @@ class TimerRunningState:
         return None
 
 
-class WorkOverState:
-    ID = "work_over_state"
+class TimerOverState:
+    def __init__(self, rgb_led):
+        self.rgb = rgb_led
+        self.blinker = Blinker(rgb_led, TIMER_OVER_COLOR, 1000)
+        self.blinker.reset(compensate=False)
 
-    def handle_event(self, event):
-        if event == LONG_PRESSED:
-            return states[WaitingState.ID]
-        elif event == SHORT_PRESSED:
-            return None  # states[BreakRunningState.ID]
+    def set_next(self, next_short, next_long):
+        self.next_short = next_short
+        self.next_long = next_long
+
+    async def run(self):
+        try:
+            while True:
+                self.blinker.run()
+                await asyncio.sleep_ms(20)
+        except asyncio.CancelledError:
+            self.blinker.stop()
+
+    def handle_event(self, event_type):
+        if event_type == LONG_PRESSED:
+            return self.next_long
+        elif event_type == SHORT_PRESSED:
+            return self.next_short
         return None
-
-    def enter(self):
-        blinker = get_task_registry().get(Blinker.TASK_NAME)
-        blinker.reset(TIMER_OVER_COLOR, compensate=False)
-        get_runner().add_task(Blinker.TASK_NAME)
-        work_indicator.on()
-
-    def exit(self):
-        get_runner().remove_task(Blinker.TASK_NAME)
-        work_indicator.off()
-
-
-class BreakOverState:
-    ID = "break_over_state"
-
-    def handle_event(self, event):
-        if event == LONG_PRESSED:
-            return states[WaitingState.ID]
-        elif event == SHORT_PRESSED:
-            return None  # states[WorkRunningState.ID]
-        return None
-
-
-states = {}

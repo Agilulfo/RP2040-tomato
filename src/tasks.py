@@ -4,64 +4,9 @@ from time import ticks_ms, time
 from colors import GREEN, OFF, RED, hue_to_rgb, interpolate
 from ticks import ticks_delta
 
-RUNNER = None
-TASK_REGISTRY = None
-
-
-def get_runner():
-    global RUNNER
-    if RUNNER is None:
-        RUNNER = Runner()
-    return RUNNER
-
-
-def get_task_registry():
-    global TASK_REGISTRY
-    if TASK_REGISTRY is None:
-        TASK_REGISTRY = TaskRegistry()
-    return TASK_REGISTRY
-
-
-class Runner:
-    def __init__(self):
-        self.tasks = set()
-
-    def add_task(self, name):
-        self.tasks.add(name)
-
-    def remove_task(self, name):
-        task = get_task_registry().get(name)
-        task.stop()
-        self.tasks.remove(name)
-
-    def run(self):
-        # Necessary to avoid circula import
-        from state_machine import get_state_machine
-
-        events = []
-        for task_name in self.tasks:
-            task = get_task_registry().get(task_name)
-            event = task.run()
-            if event:
-                events.append(event)
-        get_state_machine().handle_events(events)
-
-
-class TaskRegistry:
-    def __init__(self):
-        self.register = dict()
-
-    def add(self, task, name):
-        self.register[name] = task
-
-    def get(self, name):
-        return self.register.get(name, None)
-
 
 # TASKS
 class Blinker:
-    TASK_NAME = "blinker"
-
     def __init__(self, rgb, color, period):
         self.rgb = rgb
         self.color = color
@@ -97,7 +42,6 @@ class Blinker:
 
 
 class Timer:
-    TASK_NAME = "timer"
     FINISHED_EVENT = "finished"
 
     def __init__(self, rgb):
@@ -127,7 +71,6 @@ class Timer:
 
 
 class HueLoop:
-    TASK_NAME = "hue_loop"
     PERIOD = 5000
 
     def __init__(self, rgb):
