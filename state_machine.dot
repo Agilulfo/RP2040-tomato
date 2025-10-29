@@ -1,0 +1,26 @@
+digraph StateMachine {
+    rankdir=LR;
+    node [shape = circle];
+
+    Waiting [label="Waiting"];
+    WorkReady [label="Work Ready"];
+    BreakReady [label="Break Ready"];
+    WorkRunning [label="Work Running"];
+    BreakRunning [label="Break Running"];
+    WorkOver [label="Work Over"];
+    BreakOver [label="Break Over"];
+
+    Waiting -> WorkReady [label="short press"];
+    WorkReady -> BreakReady [label="short press"];
+    WorkReady -> WorkRunning [label="long press"];
+    BreakReady -> WorkReady [label="short press"];
+    BreakReady -> BreakRunning [label="long press"];
+    WorkRunning -> Waiting [label="long press (cancel)"];
+    WorkRunning -> WorkOver [label="timer finished"];
+    BreakRunning -> Waiting [label="long press (cancel)"];
+    BreakRunning -> BreakOver [label="timer finished"];
+    WorkOver -> BreakRunning [label="short press"];
+    WorkOver -> Waiting [label="long press"];
+    BreakOver -> WorkRunning [label="short press"];
+    BreakOver -> Waiting [label="long press"];
+}
